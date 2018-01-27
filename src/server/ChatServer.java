@@ -28,10 +28,9 @@ public class ChatServer extends Thread{
 			while(flag) {
 				Socket client = server.accept();
 				SeverThread st = new SeverThread(client);
-				i++;
-				st.setID(i);
-				st.start();
-				System.out.println("Incoming client"+client.getRemoteSocketAddress());
+				st.setID(i++);
+                st.start();
+                System.out.println("Incoming client" + client.getRemoteSocketAddress());
 			}
 			
 		} catch (Exception e) {

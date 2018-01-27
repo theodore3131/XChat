@@ -6,8 +6,8 @@ public class UserInfo {
 	String pwd;
 	String loginTime;
 	String address;
-	
-//	setter and getter
+
+    //	setter and getter
 	public void setname(String str) {
 		name = str;
 	}

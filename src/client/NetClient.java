@@ -1,13 +1,9 @@
 package client;
 
-import java.io.BufferedReader;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
+import server.DaoTools;
+import server.UserInfo;
+
+import java.io.*;
 import java.net.Socket;
 
 import javax.swing.JTextArea;
@@ -20,8 +16,9 @@ public class NetClient extends Thread {
 	DataInputStream dataInput;
 	BufferedReader bReader;
 	JTextArea jArea_receive;
+    boolean flag = true;
+
 	public NetClient(String severIP, int port, JTextArea jArea) {
-		// TODO Auto-generated constructor stub
 		this.severIP = severIP;
 		this.port = port;
 		this.jArea_receive = jArea;
@@ -34,9 +31,9 @@ public class NetClient extends Thread {
 			InputStream in = client.getInputStream();
 			bReader = new BufferedReader(new InputStreamReader(in));
 			outs = client.getOutputStream();
+			dataOutput = new DataOutputStream(outs);
 			return true;
 		} catch (Exception e) {
-			// TODO: handle exception
 			e.printStackTrace();
 		}
 		return false;
@@ -44,77 +41,95 @@ public class NetClient extends Thread {
 	
 	public boolean loginServer(String name, String pwd) {
 		try {
-			String input = bReader.readLine();
-			System.out.println("Server said: "+input);
-			
+            UserInfo user = new UserInfo();
+            user.setname(name);
+            user.setpwd(pwd);
+
 			name += "\r\n";
 			outs.write(name.getBytes());
 			outs.flush();
-			System.out.println("Cleint sent the msg, waiting for the response");
-			
-			input = bReader.readLine();
-			System.out.println("Server said: "+input);
-			pwd+="\r\n";
+
+			pwd += "\r\n";
 			outs.write(pwd.getBytes());
 			outs.flush();
-		
-			return true;
-			
+
+            //check if the user exist in the database
+            boolean loginState = DaoTools.checkLogin(user);
+            return loginState;
 		} catch (Exception e) {
-			// TODO: handle exception
-			e.printStackTrace();
+            return false;
 		}
-		return false;
 	}
 	
 	public void readFromServer() throws IOException {
 		String input;
+		if (flag) {
+            input = bReader.readLine();
+            System.out.println("Server said: " + input);
+            jArea_receive.append(input + "\r\n");
+        }
+	}
+	private void writeString(DataOutputStream out,String str,int len){
+		byte[] data = str.getBytes();
 		try {
-			input = bReader.readLine();
-			System.out.println("Server said: "+input);
-			jArea_receive.append(input+"\r\n");
+			out.write(data);
+			out.writeByte('\0');//补二进制0
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			bReader.close();
 			e.printStackTrace();
 		}
+		len--;
 	}
-	
-	public void sendMsg(Object msg) {
+	public void sendMsg(String msg, int destNum) {
 		try {
-			int type = 0;
-			String string = "";
-	
-			if (msg.getClass()==string.getClass()) {
-				//String
-				type = 0;
-				int len = msg.toString().length();
-				msg = String.valueOf(type) + len + msg;
-				this.outs.write(msg.toString().getBytes());
-			}
-			
-			else {
-				//File
-				type = 1;
-				int len = msg.toString().length();
-				msg = String.valueOf(type) + len + msg;
-				this.outs.write(msg.toString().getBytes());
-			}
-			
-			this.outs.flush();
+
+		    byte[] str = msg.getBytes();
+		    int totallen = 4+1+4+str.length;
+            System.out.println( "发送总字节数为 "+totallen);
+
+            dataOutput.writeInt(totallen);
+            dataOutput.writeByte(1);
+			dataOutput.writeInt(destNum);
+			dataOutput.write(str);
+			dataOutput.flush();
+
 		} catch (Exception e) {
-			// TODO: handle exception
 			e.printStackTrace();
 		}
 	}
-	
-	public void run() {
-		boolean flag = true;
+
+	public void sendFile(File file, int destNum) {
+	    try {
+
+	        InputStream ins = new FileInputStream(file);
+	        int fileDataLen = ins.available();
+	        int totallen = 4+1+4+256+fileDataLen;
+
+	        dataOutput.writeInt(totallen);
+	        dataOutput.writeByte(2);
+	        dataOutput.writeInt(destNum);
+
+	        String shorFileName = file.getName();
+	        writeString(dataOutput,shorFileName,256);
+	        byte[] filedata = new byte[fileDataLen];
+	        ins.read(filedata);
+
+	        dataOutput.write(filedata);
+	        dataOutput.flush();
+
+        }catch (Exception e){
+	        e.printStackTrace();
+        }
+    }
+
+    public void setFlag(boolean flag) {
+        this.flag = flag;
+    }
+
+    public void run() {
 		while(flag) {
 			try {
 				readFromServer();
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
 				flag = false;
 				e.printStackTrace();
 			}

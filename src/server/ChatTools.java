@@ -7,25 +7,25 @@ public class ChatTools {
 	private ChatTools() {}
 	static SeverUI ui = new SeverUI(stList);
 	public static void addClient(SeverThread st) {
-		try {
-			castMsg(st.getOwerUser(), "I'm online now!Users currently are:"+stList.size()+"\r\n");
-			stList.add(st);
-			ui.refresh();
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+
+        castMsg(st.getOwerUser(), "I'm online now!Users currently are:"+stList.size()+"\r\n");
+        stList.add(st);
+        ui.refresh();
+
 	}
-	
+	public static void removeClient(SeverThread st) {
+	    castMsg(st.getOwerUser(),"I'm going to be offline, see ya!"+stList.size()+"\r\n");
+	    stList.remove(st);
+	    ui.refresh();
+    }
 	public static void castMsg(UserInfo user, String msg) {
 		msg = user.getname()+" : "+msg;
-//		System.out.println(stList.size());
+
 		for (int i = 0; i < stList.size(); i++) {
 			SeverThread st = stList.get(i);
 			try {
 				st.sendMsg2Me(msg+"\r\n");
 			} catch (Exception e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}

@@ -1,9 +1,6 @@
 package server;
 
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.Socket;
 
 public class SeverThread extends Thread {
@@ -34,56 +31,87 @@ public class SeverThread extends Thread {
 		try {
 			processChat(this.client);
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
-		} 
+		}
 		//处理方法执行完毕后，线程自已即退出...
+	}
+	public boolean login(Socket client) throws Exception {
+		out = client.getOutputStream();
+		InputStream in = client.getInputStream();
+		BufferedReader bReader = new BufferedReader(new InputStreamReader(in));
+
+		String userName = bReader.readLine();
+		String pwd = bReader.readLine();
+
+		user = new UserInfo();
+		user.setname(userName);
+		user.setpwd(pwd);
+
+		//check if the user exist in the database
+		boolean loginState = DaoTools.checkLogin(user);
+		return loginState;
 	}
 	public void processChat(Socket client) throws Exception {
 		try {
-			out = client.getOutputStream();
 			InputStream in = client.getInputStream();
 			BufferedReader bReader = new BufferedReader(new InputStreamReader(in));
-			
-			String str = "你好，欢迎来到西奥多先生的房间\r\n";
-			this.sendMsg2Me(str);
-			
-			sendMsg2Me("你好，请输入用户名\r\n");
-			String userName = bReader.readLine();
-			sendMsg2Me(userName+",please input your password:\r\n");
-			String pwd = bReader.readLine();
-			
-			user = new UserInfo();
-			user.setname(userName);
-			user.setpwd(pwd);
-			
-			System.out.println(user.getname());
-			System.out.println(user.getpwd());
-//			check if the user exist in the database
-			boolean loginState = DaoTools.checkLogin(user);
-			if (!loginState) {
-				sendMsg2Me("fuck you!\r\n");
+
+			boolean loginState = login(client);
+
+			DataInputStream dins = new DataInputStream(in);
+
+			if (loginState) {
+				ChatTools.addClient(this);
+
+//				String input = bReader.readLine();
+//				while (!input.equals("bye")) {
+//					System.out.println("用户"+this.getID()+"说："+input);
+//					ChatTools.castMsg(this.user, input);
+//					input = bReader.readLine();
+//				}
+			}
+			else {
+				sendMsg2Me("name or password error!\r\n");
 				client.close();
-				return;
 			}
-//			important!!!
-			ChatTools.addClient(this);
-			sendMsg2Me("hello!"+userName+"\r\n");
-			
-			String input = bReader.readLine();
-			while (!input.equals("bye")) {
-				System.out.println("用户"+this.getID()+"说："+input);
-				ChatTools.castMsg(this.user, input);
-				input = bReader.readLine();
+			while (true) {
+				int totallen = dins.readInt();
+
+				byte flag = dins.readByte();
+
+				int destNum = dins.readInt();
+
+				if (flag==1) {
+					System.out.println("消息类型是文本");
+					byte[] data = new byte[totallen-4-1-4];
+					dins.readFully(data);
+					String msg = new String(data);
+					System.out.println("发送的消息是"+msg);
+				}
+				else if (flag==2) {
+					System.out.println("发送文件给"+destNum);
+					byte [] data = new byte[256];
+					dins.readFully(data);
+					String fileName = new String(data).trim();
+					System.out.println("文件名是："+fileName);
+					data = new byte[totallen-4-1-4-256];
+					dins.readFully(data);
+					FileOutputStream fos = new FileOutputStream(fileName);
+					fos.write(data);
+					fos.flush();
+					fos.close();
+					System.out.println("文件保存完成");
+				}
+				else {
+					System.out.println("收到未知数据包" + flag);
+					ChatTools.removeClient(this);
+					client.close();
+				}
 			}
-
-			ChatTools.castMsg(this.user, "I am offline,see ya!\r\n");
-			
-			client.close();
-
 		} catch (Exception e) {
-			// TODO: handle exception
 			e.printStackTrace();
+			ChatTools.removeClient(this);
+			client.close();
 		}
 		
 	}

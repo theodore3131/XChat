@@ -18,15 +18,13 @@ public class clientUI {
 	JFileChooser jChooser = new JFileChooser();
 	NetClient conn;
 	public clientUI() {
-		// TODO Auto-generated constructor stub
+
 	}
 	public void showloginUI() {
 		jf_login = new JFrame("登录");
 		jf_login.setSize(300, 400);
 		jf_login.setLocationRelativeTo(null);
 		jf_login.getContentPane().setBackground(Color.white);
-
-//		jf_login.setLayout(new FlowLayout());
 		
 		ImageIcon img = new ImageIcon("images/a.png");
 		JLabel jl = new JLabel(img);
@@ -48,7 +46,6 @@ public class clientUI {
 			
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				// TODO Auto-generated method stub
 				loginAction();
 			}
 		});
@@ -70,10 +67,16 @@ public class clientUI {
 		conn = new NetClient("localhost", 9090, jArea_input);
 		
 		if (conn.Conn2Sever()) {
-			if (conn.loginServer(name, pwd)) {
+			boolean res = conn.loginServer(name,pwd);
+			if (res) {
 				showMainUI();
 				conn.start();
 				jf_login.dispose();
+			}
+			else {
+			    jt_name.setText("");
+			    jt_pwd.setText("");
+				jf_login.setTitle("错误❌");
 			}
 		}
 	}
@@ -100,7 +103,9 @@ public class clientUI {
 				// TODO Auto-generated method stub
 				jChooser.showDialog(new JLabel(), "选择");
 				File file = jChooser.getSelectedFile();
-				jt_input.setText(file.getAbsolutePath());
+				if (file.exists()) {
+					conn.sendFile(file, 1);
+				}
 			}
 		});
 		jf_chat.add(jArea_input);
