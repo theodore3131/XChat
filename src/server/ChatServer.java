@@ -14,6 +14,7 @@ public class ChatServer extends Thread{
 	public void setflag(boolean flag) {
 		this.flag = flag;
 	}
+
 	ServerSocket server;
 	@Override
 	public void run() {

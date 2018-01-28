@@ -6,6 +6,8 @@ import java.awt.FlowLayout;
 import java.awt.Graphics;
 import java.util.ArrayList;
 import java.util.Hashtable;
+import java.util.LinkedList;
+import java.util.List;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -14,17 +16,12 @@ import javax.swing.event.ListSelectionListener;
 public class SeverUI {
 	
 	ArrayList<SeverThread> stList;
-	ArrayList<String> data = new ArrayList<>();
+	List<UserInfo> userList = new LinkedList<>();
 	JFrame jFrame = new JFrame("Server");
 	
 	public SeverUI(ArrayList<SeverThread> userList) {
-		// TODO Auto-generated constructor stub
 		// Transport the stlist to this UI to create an JList of users
 		this.stList = userList;
-		for (int i = 0; i < stList.size(); i++) {
-//			get the users name and put it into the list.
-			data.add(userList.get(i).getName());
-		}
 	}
 	
 	public void drawUI() {
@@ -49,23 +46,22 @@ public class SeverUI {
         JScrollPane scrollPane = new JScrollPane();  
         scrollPane.setPreferredSize(new Dimension(300, 200)); 
         
-        //将arraylist转为对象数组，以数组构造方法创建  
-        final JList jList = new JList(data.toArray());
-        
-//        String[] str = {"aa","bb","cc","dd","ee","ff","gg","aa","bb","cc","dd","ee","ff","gg"};
-//        final JList jList = new JList(str);
-        
-        jList.addListSelectionListener(new ListSelectionListener(){  
+//        将arraylist转为对象数组，以数组构造方法创建
+        final JList jList = new JList(userList.toArray());
+
+        jList.addListSelectionListener(new ListSelectionListener(){
             @Override  
             public void valueChanged(ListSelectionEvent e) {  
                 if(!jList.getValueIsAdjusting()){   //设置只有释放鼠标时才触发  
                     System.out.println(jList.getSelectedValue());  
                 }  
-            }  
-        });  
-	          
+            }
+        });
+
 	    scrollPane.setViewportView(jList);
 	    jPanel2.add(scrollPane);
+
+		UIListener l = new UIListener(jList);
 		
 		jFrame.add(jPanel1);
 		jFrame.add(jPanel2);
@@ -73,8 +69,7 @@ public class SeverUI {
 		jFrame.setVisible(true);
 		jFrame.setLocationRelativeTo(null);
 		jFrame.setDefaultCloseOperation(3);
-		
-		UIListener l = new UIListener();
+
 		button1.addActionListener(l);
 		button2.addActionListener(l);
 	}

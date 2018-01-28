@@ -21,7 +21,7 @@ public class SeverThread extends Thread {
 		return this.user; 
 	}
 	//将发送消息的代码包装到一个方法中 
-	public void sendMsg2Me(String msg) throws Exception{
+	public void sendMsg2Me(String msg) throws Exception {
 		byte[] data = msg.getBytes(); 
 		out.write(data); //用输出对象发送! 
 		out.flush();//强制输出
@@ -62,7 +62,7 @@ public class SeverThread extends Thread {
 
 			if (loginState) {
 				ChatTools.addClient(this);
-
+				sendMsg2Me("hello!\r\n");
 //				String input = bReader.readLine();
 //				while (!input.equals("bye")) {
 //					System.out.println("用户"+this.getID()+"说："+input);
@@ -86,6 +86,7 @@ public class SeverThread extends Thread {
 					byte[] data = new byte[totallen-4-1-4];
 					dins.readFully(data);
 					String msg = new String(data);
+					ChatTools.castMsg(this.user,msg);
 					System.out.println("发送的消息是"+msg);
 				}
 				else if (flag==2) {
@@ -100,6 +101,7 @@ public class SeverThread extends Thread {
 					fos.write(data);
 					fos.flush();
 					fos.close();
+                    ChatTools.castMsg(this.user,"收到一个文件");
 					System.out.println("文件保存完成");
 				}
 				else {

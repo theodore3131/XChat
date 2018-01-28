@@ -65,7 +65,7 @@ public class NetClient extends Thread {
 		String input;
 		if (flag) {
             input = bReader.readLine();
-            System.out.println("Server said: " + input);
+            System.out.println(input);
             jArea_receive.append(input + "\r\n");
         }
 	}
@@ -74,10 +74,10 @@ public class NetClient extends Thread {
 		try {
 			out.write(data);
 			out.writeByte('\0');//补二进制0
+			len--;
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		len--;
 	}
 	public void sendMsg(String msg, int destNum) {
 		try {

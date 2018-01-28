@@ -1,6 +1,8 @@
 package server;
 
 import java.sql.*;
+import java.util.LinkedList;
+import java.util.List;
 
 public class DaoTools {
 	/**
@@ -33,9 +35,39 @@ public class DaoTools {
 			e.printStackTrace();
 		}
 		if (retValue>0){
-			return true;
+		    String sql = "update Xchat set state=1 where Name=? and Password=?";
+            try {
+                PreparedStatement pst = conn.prepareStatement(sql);
+                pst.setString(1,user.getname());
+                pst.setString(2,user.getpwd());
+                pst.executeUpdate();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+
+            return true;
 		}
 		else
 			return false;
+	}
+	public static List<UserInfo> getUsers() {
+	    List<UserInfo> userList = new LinkedList<>();
+		Connection conn = null;
+		try {
+			Class.forName(JDBC_DRIVER);
+			conn = DriverManager.getConnection(DB_URL,USER,PASS);
+			String sql = "select * from XChat";
+			PreparedStatement pst = conn.prepareStatement(sql);
+			ResultSet res = pst.executeQuery();
+			while (res.next()) {
+			    UserInfo user = new UserInfo();
+			    user.setname(res.getString(1));
+			    user.setpwd(res.getString(2));
+			    userList.add(user);
+            }
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return userList;
 	}
 }
